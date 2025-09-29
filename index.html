@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống quản lý thư viện PTIT</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="#" class="navbar-brand">📚 Thư viện PTIT</a>
+            <div class="navbar-nav">
+                <a href="#" onclick="showTab('home')">Trang chủ</a>
+                <a href="#" onclick="showTab('books')">Quản lý sách</a>
+                <a href="#" onclick="showTab('borrows')">Quản lý mượn trả</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Home Tab -->
+        <div id="home-tab">
+            <div class="text-center mb-5">
+                <h1 class="display-4 text-primary mb-3">📚 Thư viện PTIT</h1>
+                <p class="lead">Hệ thống quản lý thư viện điện tử đơn giản và hiện đại</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row mb-5">
+                <div class="col-md-6">
+                    <div class="card text-center">
+                        <h3 class="text-primary mb-3">📖</h3>
+                        <h2 class="text-primary" id="total-books">10</h2>
+                        <p>Tổng số sách</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card text-center">
+                        <h3 class="text-success mb-3">👥</h3>
+                        <h2 class="text-success" id="total-users">0</h2>
+                        <p>Thành viên</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card text-center">
+                        <h3 class="text-primary mb-3">➕</h3>
+                        <h5>Thêm sách mới</h5>
+                        <p>Thêm thông tin sách vào hệ thống</p>
+                        <button class="btn btn-primary" onclick="showTab('books', 'add')">Thêm sách</button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card text-center">
+                        <h3 class="text-success mb-3">📝</h3>
+                        <h5>Tạo phiếu mượn</h5>
+                        <p>Tạo phiếu mượn mới cho thành viên</p>
+                        <button class="btn btn-success" onclick="showTab('borrows', 'add')">Tạo phiếu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Books Tab -->
+        <div id="books-tab" class="d-none">
+            <div class="flex-header">
+                <h2>📚 Quản lý sách</h2>
+                <div>
+                    <button class="btn btn-success me-2" onclick="exportData()">📥 Xuất dữ liệu</button>
+                    <button class="btn btn-secondary me-2" onclick="importData()">📤 Nhập dữ liệu</button>
+                    <button class="btn btn-primary" onclick="showAddBookForm()">➕ Thêm sách mới</button>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <input type="text" class="form-control" id="search-books" placeholder="Tìm kiếm theo tiêu đề, tác giả, ISBN..." onkeyup="filterBooks(this)">
+                </div>
+                <div class="col-md-4">
+                    <select class="form-control" id="book-status-filter" onchange="filterBooks()">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="available">Còn sẵn</option>
+                        <option value="unavailable">Hết sách</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Books Table -->
+            <div class="alert alert-info d-none" id="no-books-menu">
+                Chưa có sách nào trong hệ thống. Hãy thêm sách mới!
+            </div>
+            
+            <table id="books-table"></table>
+
+            <!-- Add Book Form -->
+            <div id="add-book-form" class="d-none">
+                <div class="card">
+                    <h5>➕ Thêm sách mới</h5>
+                    <form onsubmit="addBook(event)">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Tiêu đề</label>
+                                <input type="text" id="book-title" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Tác giả</label>
+                                <input type="text" id="book-author" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>ISBN</label>
+                                <input type="text" id="book-isbn" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label>Số lượng</label>
+                                <input type="number" id="book-quantity" class="form-control" min="1" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Nhà xuất bản</label>
+                                <input type="text" id="book-publisher" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label>Năm xuất bản</label>
+                                <input type="number" id="book-year" class="form-control">
+                            </div>
+                        </div>
+                        <div>
+                            <label>Mô tả</label>
+                            <textarea id="book-description" class="form-control"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">💾 Lưu sách</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideAddBookForm()">❌ Hủy bỏ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Borrows Tab -->
+        <div id="borrows-tab" class="d-none">
+            <div class="flex-header">
+                <h2>📝 Quản lý mượn trả</h2>
+                <button class="btn btn-primary" onclick="showAddBorrowForm()">➕ Tạo phiếu mượn mới</button>
+            </div>
+
+            <div class="alert alert-info d-none" id="no-borrows-menu">
+                Chưa có phiếu mượn nào trong hệ thống.
+            </div>
+            
+            <table id="borrows-table"></table>
+
+            <!-- Add Borrow Form -->
+            <div id="add-borrow-form" class="d-none">
+                <div class="card">
+                    <h5>➕ Tạo phiếu mượn mới</h5>
+                    <form onsubmit="addBorrow(event)">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Người mượn</label>
+                                <input type="text" id="borrow-user" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Sách</label>
+                                <select id="borrow-book" class="form-control" required></select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Ngày mượn</label>
+                                <input type="date" id="borrow-date" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Ngày hẹn trả</label>
+                                <input type="date" id="borrow-due" class="form-control" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">💾 Tạo phiếu</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideAddBorrowForm()">❌ Hủy bỏ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
