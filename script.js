@@ -89,19 +89,10 @@ function showTab(tab, action = null) {
 function showAddBookForm() {
     const form = document.getElementById("add-book-form");
     if (form) {
+        // Reset form to default state first
+        resetBookForm();
+        // Then show the form
         form.classList.remove('d-none');
-        // Reset form
-        form.querySelectorAll("input, textarea").forEach(input => {
-            input.value = "";
-            input.classList.remove('error');
-        });
-        
-        // Reset submit button text
-        const submitBtn = form.querySelector("button[type='submit']");
-        if (submitBtn) {
-            submitBtn.innerHTML = "💾 Lưu sách";
-            form.onsubmit = addBook;
-        }
     }
 }
 
@@ -109,6 +100,30 @@ function hideAddBookForm() {
     const form = document.getElementById("add-book-form");
     if (form) {
         form.classList.add('d-none');
+        resetBookForm();
+    }
+}
+
+function resetBookForm() {
+    const form = document.getElementById("add-book-form");
+    if (form) {
+        // Reset all form fields
+        form.querySelectorAll("input, textarea").forEach(input => {
+            input.value = "";
+            input.classList.remove('error');
+        });
+        
+        // Reset submit button to default state
+        const submitBtn = form.querySelector("button[type='submit']");
+        if (submitBtn) {
+            submitBtn.innerHTML = "💾 Lưu sách";
+        }
+        
+        // Reset form event handler to default
+        form.onsubmit = function(event) { 
+            event.preventDefault();
+            addBook(event); 
+        };
     }
 }
 
@@ -151,6 +166,12 @@ function addBook(event) {
 function editBook(id) {
     const book = books.find(b => b.id == id);
     if (book) {
+        // Show form first
+        const form = document.getElementById("add-book-form");
+        if (form) {
+            form.classList.remove('d-none');
+        }
+        
         // Fill form with book data
         document.getElementById("book-title").value = book.title;
         document.getElementById("book-author").value = book.author;
@@ -160,16 +181,16 @@ function editBook(id) {
         document.getElementById("book-quantity").value = book.quantity;
         document.getElementById("book-description").value = book.description || "";
         
-        // Change submit button to update mode
+        // Change submit button to update mode and set event handler
         const submitBtn = document.querySelector("#add-book-form button[type='submit']");
         if (submitBtn) {
             submitBtn.innerHTML = "💾 Cập nhật sách";
-            document.querySelector("#add-book-form form").onsubmit = function(e) { 
-                updateBook(e, id); 
+            // Clear any existing event listeners and set new one
+            form.onsubmit = function(event) { 
+                event.preventDefault();
+                updateBook(event, id); 
             };
         }
-        
-        showAddBookForm();
     }
 }
 
@@ -179,12 +200,22 @@ function updateBook(event, id) {
     try {
         const bookIndex = books.findIndex(b => b.id == id);
         if (bookIndex !== -1) {
-            books[bookIndex].title = document.getElementById("book-title").value.trim();
-            books[bookIndex].author = document.getElementById("book-author").value.trim();
+            // Validate required fields
+            const title = document.getElementById("book-title").value.trim();
+            const author = document.getElementById("book-author").value.trim();
+            const quantity = parseInt(document.getElementById("book-quantity").value);
+            
+            if (!title || !author || !quantity) {
+                alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
+                return;
+            }
+            
+            books[bookIndex].title = title;
+            books[bookIndex].author = author;
             books[bookIndex].isbn = document.getElementById("book-isbn").value.trim();
             books[bookIndex].publisher = document.getElementById("book-publisher").value.trim();
             books[bookIndex].year = parseInt(document.getElementById("book-year").value) || null;
-            books[bookIndex].quantity = parseInt(document.getElementById("book-quantity").value);
+            books[bookIndex].quantity = quantity;
             books[bookIndex].description = document.getElementById("book-description").value.trim();
             
             saveDataToStorage();
