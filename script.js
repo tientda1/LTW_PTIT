@@ -37,6 +37,9 @@ let books = [
 
 let borrows = [];
 
+// Store current form handler
+let currentFormHandler = null;
+
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     loadDataFromStorage();
@@ -105,7 +108,7 @@ function hideAddBookForm() {
 }
 
 function resetBookForm() {
-    const form = document.getElementById("add-book-form");
+    const form = document.getElementById("book-form");
     if (form) {
         // Reset all form fields
         form.querySelectorAll("input, textarea").forEach(input => {
@@ -119,11 +122,15 @@ function resetBookForm() {
             submitBtn.innerHTML = "💾 Lưu sách";
         }
         
-        // Reset form event handler to default
-        form.onsubmit = function(event) { 
+        // Remove any existing event listeners and add new one for add mode
+        if (currentFormHandler) {
+            form.removeEventListener('submit', currentFormHandler);
+        }
+        currentFormHandler = function(event) {
             event.preventDefault();
-            addBook(event); 
+            addBook(event);
         };
+        form.addEventListener('submit', currentFormHandler);
     }
 }
 
@@ -131,23 +138,28 @@ function addBook(event) {
     event.preventDefault();
     
     try {
+        // Get form values
+        const title = document.getElementById("book-title").value.trim();
+        const author = document.getElementById("book-author").value.trim();
+        const quantity = parseInt(document.getElementById("book-quantity").value);
+        
+        // Validate required fields
+        if (!title || !author || !quantity || quantity <= 0) {
+            alert("Vui lòng điền đầy đủ thông tin bắt buộc!\n- Tiêu đề\n- Tác giả\n- Số lượng (phải > 0)");
+            return;
+        }
+        
         const newBook = {
             id: Date.now(),
-            title: document.getElementById("book-title").value.trim(),
-            author: document.getElementById("book-author").value.trim(),
+            title: title,
+            author: author,
             isbn: document.getElementById("book-isbn").value.trim(),
             publisher: document.getElementById("book-publisher").value.trim(),
             year: parseInt(document.getElementById("book-year").value) || null,
-            quantity: parseInt(document.getElementById("book-quantity").value),
+            quantity: quantity,
             borrowed: 0,
             description: document.getElementById("book-description").value.trim()
         };
-        
-        // Validate required fields
-        if (!newBook.title || !newBook.author || !newBook.quantity) {
-            alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
-            return;
-        }
         
         books.push(newBook);
         saveDataToStorage();
@@ -158,7 +170,7 @@ function addBook(event) {
         
         alert("✅ Đã thêm sách thành công!");
     } catch (error) {
-        console.error('Error adding booking:', error);
+        console.error('Error adding book:', error);
         alert("❌ Có lỗi xảy ra khi thêm sách!");
     }
 }
@@ -167,9 +179,10 @@ function editBook(id) {
     const book = books.find(b => b.id == id);
     if (book) {
         // Show form first
-        const form = document.getElementById("add-book-form");
-        if (form) {
-            form.classList.remove('d-none');
+        const formContainer = document.getElementById("add-book-form");
+        const form = document.getElementById("book-form");
+        if (formContainer) {
+            formContainer.classList.remove('d-none');
         }
         
         // Fill form with book data
@@ -182,15 +195,20 @@ function editBook(id) {
         document.getElementById("book-description").value = book.description || "";
         
         // Change submit button to update mode and set event handler
-        const submitBtn = document.querySelector("#add-book-form button[type='submit']");
+        const submitBtn = form.querySelector("button[type='submit']");
         if (submitBtn) {
             submitBtn.innerHTML = "💾 Cập nhật sách";
-            // Clear any existing event listeners and set new one
-            form.onsubmit = function(event) { 
-                event.preventDefault();
-                updateBook(event, id); 
-            };
         }
+        
+        // Remove existing event listener and add new one for edit mode
+        if (currentFormHandler) {
+            form.removeEventListener('submit', currentFormHandler);
+        }
+        currentFormHandler = function(event) {
+            event.preventDefault();
+            updateBook(event, id);
+        };
+        form.addEventListener('submit', currentFormHandler);
     }
 }
 
@@ -205,8 +223,8 @@ function updateBook(event, id) {
             const author = document.getElementById("book-author").value.trim();
             const quantity = parseInt(document.getElementById("book-quantity").value);
             
-            if (!title || !author || !quantity) {
-                alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
+            if (!title || !author || !quantity || quantity <= 0) {
+                alert("Vui lòng điền đầy đủ thông tin bắt buộc!\n- Tiêu đề\n- Tác giả\n- Số lượng (phải > 0)");
                 return;
             }
             
